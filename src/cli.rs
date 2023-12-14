@@ -8,13 +8,13 @@ use clap::Parser;
 pub struct Args {
     /// Input file path
     #[arg(short, long)]
-    input_path: PathBuf,
+    pub input_path: PathBuf,
 
     /// Output file path
     #[arg(short, long)]
-    output_path: PathBuf,
+    pub output_path: PathBuf,
 
     /// Hue rotation angle in degrees
-    #[arg(short, long, default_value = "0")]
-    angle: i32,
+    #[arg(short, long, default_value = "0", allow_hyphen_values = true)]
+    pub angle: i32,
 }
