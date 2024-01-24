@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use clap::Parser;
 
 /// Rotate image hue
@@ -8,11 +6,11 @@ use clap::Parser;
 pub struct Args {
     /// Input file path
     #[arg(short, long)]
-    pub input_path: PathBuf,
+    pub input_path: String,
 
     /// Output file path
     #[arg(short, long)]
-    pub output_path: PathBuf,
+    pub output_path: String,
 
     /// Hue rotation angle in degrees
     #[arg(short, long, default_value = "0", allow_hyphen_values = true)]

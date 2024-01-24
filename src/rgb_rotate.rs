@@ -18,10 +18,10 @@ impl RGBRotate {
     pub fn new(angle: i32) -> RGBRotate {
         let angle = (angle as f64).to_radians();
 
-        let cosv: f64 = angle.cos();
-        let sinv: f64 = angle.sin();
+        let cosv = angle.cos();
+        let sinv = angle.sin();
 
-        let matrix: [f64; 9] = [
+        let matrix = [
             // Reds
             0.213 + cosv * 0.787 - sinv * 0.213,
             0.715 - cosv * 0.715 - sinv * 0.715,
@@ -36,16 +36,32 @@ impl RGBRotate {
             0.072 + cosv * 0.928 + sinv * 0.072,
         ];
 
-        RGBRotate { matrix: matrix }
+        RGBRotate { matrix }
     }
 
-    pub fn rotate_pixel(&self, r: u8, g: u8, b: u8) -> [u8; 3] {
-        let rx = r as f64 * self.matrix[0] + g as f64 * self.matrix[1] + b as f64 * self.matrix[2];
+    pub fn rotate_pixels(&self, bytes: &[u8]) -> Vec<u8> {
+        bytes
+            .chunks_exact(3)
+            .map(|pixel| {
+                let r = pixel[0];
+                let g = pixel[1];
+                let b = pixel[2];
 
-        let gx = r as f64 * self.matrix[3] + g as f64 * self.matrix[4] + b as f64 * self.matrix[5];
+                let rx = r as f64 * self.matrix[0]
+                    + g as f64 * self.matrix[1]
+                    + b as f64 * self.matrix[2];
 
-        let bx = r as f64 * self.matrix[6] + g as f64 * self.matrix[7] + b as f64 * self.matrix[8];
+                let gx = r as f64 * self.matrix[3]
+                    + g as f64 * self.matrix[4]
+                    + b as f64 * self.matrix[5];
 
-        [clamp!(rx), clamp!(gx), clamp!(bx)]
+                let bx = r as f64 * self.matrix[6]
+                    + g as f64 * self.matrix[7]
+                    + b as f64 * self.matrix[8];
+
+                [clamp!(rx), clamp!(gx), clamp!(bx)]
+            })
+            .flatten()
+            .collect()
     }
 }
