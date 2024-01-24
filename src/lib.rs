@@ -1,11 +1,19 @@
+#![feature(portable_simd)]
+
 pub mod cli;
 mod rgb_rotate;
 
+use cli::ExecutionMode;
 use image::io::Reader as ImageReader;
 
 use crate::rgb_rotate::RGBRotate;
 
-pub fn run(input_path: &str, output_path: &str, angle: i32) -> Result<(), &'static str> {
+pub fn run(
+    input_path: &str,
+    output_path: &str,
+    angle: i32,
+    execution_mode: ExecutionMode,
+) -> Result<(), &'static str> {
     let image = match match ImageReader::open(input_path) {
         Ok(buf) => buf,
         Err(_) => return Err("couldn't open file"),
@@ -20,18 +28,21 @@ pub fn run(input_path: &str, output_path: &str, angle: i32) -> Result<(), &'stat
 
     let rgb_rotate = RGBRotate::new(angle);
 
-    let rotated_bytes = rgb_rotate.rotate_pixels(bytes);
+    let rotated_bytes = match execution_mode {
+        ExecutionMode::Regular => rgb_rotate.rotate_pixels(bytes),
+        ExecutionMode::PortableSimd => rgb_rotate.rotate_pixels_portable_simd(bytes),
+        ExecutionMode::Asm => rgb_rotate.rotate_pixels_asm(bytes),
+    };
 
-    match image::save_buffer(
+    if let Err(_) = image::save_buffer(
         output_path,
         &rotated_bytes,
         image.width(),
         image.height(),
         image::ColorType::Rgb8,
     ) {
-        Ok(_) => (),
-        Err(_) => return Err("couldn't save file"),
-    };
+        return Err("couldn't save file");
+    }
 
     Ok(())
 }
