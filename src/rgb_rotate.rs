@@ -1,6 +1,15 @@
-use std::arch::asm;
 use std::simd::f32x4;
 use std::simd::prelude::SimdFloat;
+
+mod asm {
+    use std::arch::global_asm;
+
+    global_asm!(include_str!("rgb_rotate.s"));
+
+    extern "C" {
+        pub fn rotate_pixels(source: *const u8, target: *mut u8, matrix: *const f32, length: usize);
+    }
+}
 
 pub struct RGBRotate {
     matrix: [f32; 9],
@@ -96,54 +105,15 @@ impl RGBRotate {
     }
 
     pub fn rotate_pixels_asm(&self, bytes: &[u8]) -> Vec<u8> {
-        let mut result = Vec::with_capacity(bytes.len());
+        let mut result: Vec<u8> = vec![0; bytes.len()];
 
-        for pixel in bytes.chunks_exact(3) {
-            let r = pixel[0] as f32;
-            let g = pixel[1] as f32;
-            let b = pixel[2] as f32;
-
-            let pixel = f32x4::from([r, g, b, 0.0]);
-
-            let rx: f32;
-            let gx: f32;
-            let bx: f32;
-
-            unsafe {
-                asm!(
-                    "movaps xmm0, xmm1",
-                    "mulps xmm0, xmm2",
-                    "haddps xmm0, xmm0",
-                    "haddps xmm0, xmm0",
-                    "movaps xmm3, xmm0",
-
-                    in("xmm1") pixel,
-                    in("xmm2") self.simd_matrix[0],
-                    out("xmm3") rx,
-                );
-                asm!(
-                    "movaps xmm0, xmm1",
-                    "mulps xmm0, xmm2",
-                    "haddps xmm0, xmm0",
-                    "haddps xmm0, xmm0",
-                    "movaps xmm4, xmm0",
-                    in("xmm2") self.simd_matrix[1],
-                    out("xmm4") gx,
-                );
-                asm!(
-                    "movaps xmm0, xmm1",
-                    "mulps xmm0, xmm2",
-                    "haddps xmm0, xmm0",
-                    "haddps xmm0, xmm0",
-                    "movaps xmm5, xmm0",
-                    in("xmm2") self.simd_matrix[2],
-                    out("xmm5") bx,
-                );
-            }
-
-            result.push(clamp!(rx));
-            result.push(clamp!(gx));
-            result.push(clamp!(bx));
+        unsafe {
+            asm::rotate_pixels(
+                bytes.as_ptr(),
+                result.as_mut_ptr(),
+                self.matrix.as_ptr(),
+                bytes.len(),
+            );
         }
 
         result
