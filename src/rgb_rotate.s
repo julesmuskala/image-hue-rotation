@@ -51,7 +51,7 @@ loop_start:
     mulps xmm0, xmm3
     haddps xmm0, xmm0
     haddps xmm0, xmm0                   // sum floats
-    cvtps2pi eax, xmm0                  // convert floats to ints
+    cvttss2si eax, xmm0                  // convert floats to ints
 
     // clamp (0 - 255)
     mov ebx, 255
@@ -68,7 +68,7 @@ loop_start:
     mulps xmm0, xmm4
     haddps xmm0, xmm0
     haddps xmm0, xmm0                   // sum floats
-    cvtps2pi eax, xmm0                  // convert floats to ints
+    cvttss2si eax, xmm0                  // convert floats to ints
 
 
     // clamp (0 - 255)
